@@ -29,7 +29,7 @@ fun AuthHeader(title: String, cornerSize: Dp = 200.dp) { // <-- Agregamos corner
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(250.dp)
+            .height(185.dp)
             .background(
                 color = MusicJamDark,
                 shape = RoundedCornerShape(bottomEnd = cornerSize) // <-- Lo usamos aquí
@@ -89,7 +89,7 @@ fun MusicJamTextField(
                     Icon(
                         imageVector = image,
                         contentDescription = "Toggle password visibility",
-                        modifier = Modifier.clickable { passwordVisible = !passwordVisible }
+                        modifier = Modifier.padding(horizontal = 24.dp).clickable { passwordVisible = !passwordVisible }
                     )
                 }
             }

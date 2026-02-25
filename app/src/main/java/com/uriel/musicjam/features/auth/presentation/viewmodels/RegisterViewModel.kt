@@ -20,21 +20,39 @@ class RegisterViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(RegisterUIState())
     val uiState = _uiState.asStateFlow()
 
-    // Recibimos el archivo de la foto que modificamos en el paso anterior
-    fun register(username: String, email: String, password: String, photo: File?) {
+    fun onUsernameChange(newValue: String) {
+        _uiState.update { it.copy(username = newValue.replace(" ", ""), error = null) }
+    }
+
+    fun onEmailChange(newValue: String) {
+        _uiState.update { it.copy(email = newValue.replace(" ", ""), error = null) }
+    }
+
+    fun onPasswordChange(newValue: String) {
+        _uiState.update { it.copy(password = newValue.replace(" ", ""), error = null) }
+    }
+
+    fun onConfirmPasswordChange(newValue: String) {
+        _uiState.update { it.copy(confirmPassword = newValue.replace(" ", ""), error = null) }
+    }
+
+    fun register(photo: File?) {
+        val state = _uiState.value
+
+        if (state.password != state.confirmPassword) {
+            _uiState.update { it.copy(error = "Las contraseñas no coinciden") }
+            return
+        }
+
         _uiState.update { it.copy(isLoading = true, error = null) }
 
         viewModelScope.launch {
-            val result = registerUseCase(username, email, password, photo)
+            val result = registerUseCase(state.username, state.email, state.password, photo)
 
             _uiState.update { currentState ->
                 result.fold(
-                    onSuccess = {
-                        currentState.copy(isLoading = false, isSuccess = true)
-                    },
-                    onFailure = { error ->
-                        currentState.copy(isLoading = false, error = error.message)
-                    }
+                    onSuccess = { currentState.copy(isLoading = false, isSuccess = true) },
+                    onFailure = { error -> currentState.copy(isLoading = false, error = error.message) }
                 )
             }
         }
