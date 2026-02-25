@@ -2,6 +2,7 @@ package com.uriel.musicjam.features.auth.presentation.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -9,12 +10,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.uriel.musicjam.core.theme.MusicJamTheme
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.uriel.musicjam.features.auth.presentation.components.*
 import com.uriel.musicjam.features.auth.presentation.viewmodels.LoginViewModel
 
@@ -24,41 +27,29 @@ fun LoginScreen(
     onNavigateToRegister: () -> Unit,
     viewModel: LoginViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    // Estados para los campos de texto
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-
-    // Escuchar cambios en el estado (Éxito o Error)
     LaunchedEffect(uiState) {
-        if (uiState.isSuccess) {
-            onNavigateToHome()
-        }
+        if (uiState.isSuccess) onNavigateToHome()
         if (uiState.error != null) {
             Toast.makeText(context, uiState.error, Toast.LENGTH_LONG).show()
-            viewModel.clearError() // Limpiamos para que no se muestre el toast múltiples veces
+            viewModel.clearError()
         }
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MusicJamBackground) // El fondo beige
+        modifier = Modifier.fillMaxSize().background(MusicJamBackground)
     ) {
-        // 1. El encabezado oscuro con la curva
-        AuthHeader(title = "Inicia\nsesión")
+        AuthHeader(title = "Inicia\n\nsesión")
 
         Spacer(modifier = Modifier.height(32.dp))
 
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 34.dp),
+            // 1. Aumentamos el padding horizontal a 48.dp
+            modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 2. Título principal
             Text(
                 text = "Bienvenido de nuevo",
                 fontSize = 40.sp,
@@ -70,31 +61,43 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // 3. Campos de entrada
+            // 2. Usamos el estado del ViewModel
             MusicJamTextField(
-                value = username,
-                onValueChange = { username = it },
-                label = "Nombre de usuario"
+                value = uiState.username,
+                onValueChange = { viewModel.onUsernameChange(it) },
+                label = "Nombre de usuario",
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
             MusicJamTextField(
-                value = password,
-                onValueChange = { password = it },
+                value = uiState.password,
+                onValueChange = { viewModel.onPasswordChange(it) },
                 label = "Contraseña",
                 isPassword = true
             )
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // 4. Botón con indicador de carga
             MusicJamButton(
                 text = "Ingresar",
                 isLoading = uiState.isLoading,
-                onClick = {
-                    viewModel.login(username, password)
+                onClick = { viewModel.login() }
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // 3. Texto de navegación al registro
+            val annotatedText = buildAnnotatedString {
+                append("¿No tienes una cuenta? ")
+                withStyle(style = SpanStyle(color = MusicJamDark, fontWeight = FontWeight.Bold)) {
+                    append("Regístrate")
                 }
+            }
+            Text(
+                text = annotatedText,
+                fontSize = 14.sp,
+                modifier = Modifier.clickable { onNavigateToRegister() }
             )
         }
     }
