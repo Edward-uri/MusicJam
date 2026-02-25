@@ -6,6 +6,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.composable
 import com.uriel.musicjam.features.auth.presentation.screens.LoginScreen
 import com.uriel.musicjam.features.auth.presentation.screens.SignUpScreen
+import com.uriel.musicjam.features.home.presentation.screens.HomeScreen
 
 @Composable
 fun AppNavigation() {
@@ -46,8 +47,14 @@ fun AppNavigation() {
             )
         }
         composable(AppScreens.Home.route) {
-            //HomeScreen(navController = navController)
+            HomeScreen(
+                onTrackClick = { track ->
+                    // navController.navigate(AppScreens.Player.createRoute(track.id))
+                },
+                onNavigate = { route ->
+                    navController.navigate(route)
+                }
+            )
         }
-
     }
 }
