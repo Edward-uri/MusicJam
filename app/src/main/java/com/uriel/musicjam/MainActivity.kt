@@ -10,13 +10,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.uriel.musicjam.core.navegation.AppNavigation
 import com.uriel.musicjam.core.theme.MusicJamTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MusicJamTheme {
+            MusicJamTheme() {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
