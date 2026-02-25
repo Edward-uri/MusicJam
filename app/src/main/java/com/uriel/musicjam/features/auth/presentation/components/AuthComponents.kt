@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -24,14 +25,14 @@ val MusicJamBackground = Color(0xFFFDF5E6)
 val MusicJamFieldBg = Color(0x80D9C190)
 
 @Composable
-fun AuthHeader(title: String) {
+fun AuthHeader(title: String, cornerSize: Dp = 200.dp) { // <-- Agregamos cornerSize con valor por defecto
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(250.dp) // Ajustado para ser responsivo
+            .height(250.dp)
             .background(
                 color = MusicJamDark,
-                shape = RoundedCornerShape(bottomEnd = 200.dp)
+                shape = RoundedCornerShape(bottomEnd = cornerSize) // <-- Lo usamos aquí
             ),
         contentAlignment = Alignment.CenterStart
     ) {
