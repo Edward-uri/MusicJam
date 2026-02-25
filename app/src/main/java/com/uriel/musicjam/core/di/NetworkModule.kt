@@ -27,7 +27,7 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("https://spority.aleosh.online/")
+            .baseUrl("https://sporify.aleosh.online/")
             .client(okHttpClient)  // <-- agregamos el cliente http que contiene el interceptor
             .addConverterFactory(GsonConverterFactory.create())
             .build()
