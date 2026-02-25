@@ -1,4 +1,4 @@
-package com.uriel.musicjam.ui.theme
+package com.uriel.musicjam.core.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

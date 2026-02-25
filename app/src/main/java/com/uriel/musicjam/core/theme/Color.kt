@@ -1,4 +1,4 @@
-package com.uriel.musicjam.ui.theme
+package com.uriel.musicjam.core.theme
 import androidx.compose.ui.graphics.Color
 
 val primaryLight = Color(0xFF262A22)
