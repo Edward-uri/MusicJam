@@ -16,9 +16,8 @@ class HomeRepositoryImpl @Inject constructor(
 
     override suspend fun getMyAlbums(): Result<List<SpotifyAlbum>> {
         return try {
-            val response = api.getMyAlbums()  // devuelve List<SpotifyAlbumDto> directo
-            Log.d("HomeRepo", response.toString())
-            Result.Success(response.map { it.toDomain() })
+            val response = api.getMyAlbums()
+            Result.Success(response.data?.map { it.toDomain() } ?: emptyList())
         } catch (e: Exception) {
             Result.Error(e.message ?: "Error al obtener álbumes")
         }
@@ -26,9 +25,8 @@ class HomeRepositoryImpl @Inject constructor(
 
     override suspend fun getMyTopTracks(): Result<List<SpotifyTrack>> {
         return try {
-            val response = api.getMyTopTracks()  // devuelve List<SpotifyTrackDto> directo
-            Log.d("HomeRepo", response.toString())
-            Result.Success(response.map { it.toDomain() })
+            val response = api.getMyTopTracks()
+            Result.Success(response.data?.map { it.toDomain() } ?: emptyList())
         } catch (e: Exception) {
             Result.Error(e.message ?: "Error al obtener canciones")
         }
@@ -36,10 +34,14 @@ class HomeRepositoryImpl @Inject constructor(
 
     override suspend fun getMyProfile(): Result<UserProfile> {
         return try {
-            val response = api.getMyProfile()  // devuelve UserResponseDto directo
-            Result.Success(response.toDomain())
+            val response = api.getMyProfile()
+            val profile = response.data?.toDomain()
+                ?: return Result.Error("Perfil no encontrado")
+            Result.Success(profile)
         } catch (e: Exception) {
             Result.Error(e.message ?: "Error al obtener perfil")
         }
     }
+
+
 }
