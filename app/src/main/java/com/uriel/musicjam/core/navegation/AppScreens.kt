@@ -6,4 +6,7 @@ sealed class AppScreens(val route: String) {
 
     object Home : AppScreens("home_screen")
 
+    object Search : AppScreens("search_screen")
+    object Library : AppScreens("library_screen")
+
 }

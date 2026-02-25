@@ -11,6 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.uriel.musicjam.core.navegation.AppScreens
 import com.uriel.musicjam.features.home.domain.entities.SpotifyTrack
 import com.uriel.musicjam.features.home.presentation.components.AlbumsRow
 import com.uriel.musicjam.features.home.presentation.components.HomeBottomBar
@@ -20,20 +23,19 @@ import com.uriel.musicjam.features.home.presentation.viewmodels.HomeViewModel
 
 @Composable
 fun HomeScreen(
+    navController: NavController,
     onTrackClick: (SpotifyTrack) -> Unit,
-    onNavigate: (String) -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route ?: AppScreens.Home.route
 
-    Scaffold(
-        bottomBar = {
-            HomeBottomBar(
-                currentRoute = "home",
-                onNavigate = onNavigate
-            )
-        }
-    ) { padding ->
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.systemBars)
+    ) {
         when {
             uiState.isLoading -> {
                 Box(
@@ -60,8 +62,8 @@ fun HomeScreen(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(padding)
-                        .padding(horizontal = 16.dp)
+                        .padding(horizontal = 16.dp),
+                    contentPadding = PaddingValues(bottom = 120.dp)
                 ) {
                     item {
                         HomeHeader(profile = uiState.profile)
@@ -92,5 +94,19 @@ fun HomeScreen(
                 }
             }
         }
+
+        HomeBottomBar(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            currentRoute = currentRoute,
+            onNavigate = { route ->
+                if (route != currentRoute) {
+                    navController.navigate(route) {
+                        popUpTo(AppScreens.Home.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            }
+        )
     }
 }

@@ -48,13 +48,18 @@ fun AppNavigation() {
         }
         composable(AppScreens.Home.route) {
             HomeScreen(
+                navController = navController,
                 onTrackClick = { track ->
                     // navController.navigate(AppScreens.Player.createRoute(track.id))
-                },
-                onNavigate = { route ->
-                    navController.navigate(route)
                 }
             )
+        }
+        composable(AppScreens.Search.route) {
+            // SearchScreen()
+        }
+
+        composable(AppScreens.Library.route) {
+            // LibraryScreen()
         }
     }
 }
