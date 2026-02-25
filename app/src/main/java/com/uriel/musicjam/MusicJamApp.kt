@@ -1,4 +1,7 @@
 package com.uriel.musicjam
 
-class MusicJamApp {
-}
+import android.app.Application
+import dagger.hilt.android.HiltAndroidApp
+
+@HiltAndroidApp // <-- Inicializa Hilt para toda la app
+class MusicJamApp : Application()
