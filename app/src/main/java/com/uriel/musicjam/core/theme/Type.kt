@@ -1,4 +1,4 @@
-package com.uriel.musicjam.ui.theme
+package com.uriel.musicjam.core.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.font.FontFamily
