@@ -9,7 +9,7 @@ import javax.inject.Inject
 
 class SearchRepositoryImpl @Inject constructor(
     private val api: SearchApiService
-) : SearchRepository {
+) : SearchRepository{
 
     override suspend fun searchTracks(query: String): Result<List<SpotifyTrack>> {
         return try {
