@@ -185,28 +185,28 @@ class PlayerViewModel @Inject constructor(
 
         // 4. Control del SDK local de Spotify
         when (event.eventType) {
-            "PLAYING" -> {
-                track?.let {
+            "PLAYING", "TRACK_CHANGED" -> {
+                /*track?.let {
                     // Validamos si es la misma canción que ya estaba en el reproductor
                     if (previousState.currentTrackId == it.id) {
-                        Log.d("PlayerVM", "Resume local")
-                        spotifyRemote.resume()
+                        // Si es la misma canción y el evento es PLAYING, solo le quitamos la pausa (resume)
+                        // Si el evento es TRACK_CHANGED pero es la misma canción, se ignora para no reiniciarla
+                        if (event.eventType == "PLAYING") {
+                            Log.d("PlayerVM", "Resume local")
+                            spotifyRemote.resume()
+                        } else {
+                            Log.d("PlayerVM", "Ignorando TRACK_CHANGED repetido para: ${it.id}")
+                        }
                     } else {
                         // Es una canción nueva, por lo tanto inicia desde el principio
                         Log.d("PlayerVM", "Play local: spotify:track:${it.id}")
                         spotifyRemote.play("spotify:track:${it.id}")
                     }
-                }
+                }*/
             }
             "PAUSED" -> {
-                Log.d("PlayerVM", "Pause local")
-                spotifyRemote.pause()
-            }
-            "TRACK_CHANGED" -> {
-                track?.let {
-                    Log.d("PlayerVM", "Track changed: spotify:track:${it.id}")
-                    spotifyRemote.play("spotify:track:${it.id}")
-                }
+                /*Log.d("PlayerVM", "Pause local")
+                spotifyRemote.pause()*/
             }
         }
     }
