@@ -57,34 +57,26 @@ class SearchViewModel @Inject constructor(
     }
 
     fun addTrackToQueue(track: SpotifyTrack) {
+        // 1. OPTIMISTIC UPDATE: Asumimos éxito inmediato (se actualiza la UI al instante)
+        _uiState.update { state ->
+            state.copy(
+                queuedTrackIds = state.queuedTrackIds + track.id, // Añadimos visualmente a la cola
+                queueMessage = "Añadida a la cola: ${track.name}"
+            )
+        }
+
+        // 2. HACEMOS LA PETICIÓN AL SERVIDOR
         viewModelScope.launch {
-            // 1. Obtenemos el joinCode activo
-            val joinCode = jamCodeManager.getActiveJoinCode()
+            // Obtenemos el código. Si no hay (es null), mandamos "INVALID" para forzar el error en el backend
+            val joinCode = jamCodeManager.getActiveJoinCode() ?: "INVALID"
 
-            if (joinCode == null) {
-                // Si no hay jam activa, avisamos al usuario y cancelamos
-                _uiState.update {
-                    it.copy(queueMessage = "No estás en una Jam activa")
-                }
-                return@launch
-            }
-
-            // 2. OPTIMISTIC UPDATE
-            _uiState.update { state ->
-                state.copy(
-                    queuedTrackIds = state.queuedTrackIds + track.id,
-                    queueMessage = "Añadida a la cola: ${track.name}"
-                )
-            }
-
-            // 3. HACEMOS LA PETICIÓN AL SERVIDOR (Añadiendo el joinCode)
             val result = addTrackToQueueUseCase(joinCode, track.id)
 
-            // 4. ROLLBACK si falló
+            // 3. ROLLBACK: Si falló (inevitable si el código era inválido o null), revertimos el cambio visual
             if (result is Result.Error) {
                 _uiState.update { state ->
                     state.copy(
-                        queuedTrackIds = state.queuedTrackIds - track.id,
+                        queuedTrackIds = state.queuedTrackIds - track.id, // Lo quitamos visualmente
                         queueMessage = "No se pudo añadir ${track.name}. Revirtiendo..."
                     )
                 }
