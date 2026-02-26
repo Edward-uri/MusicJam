@@ -3,6 +3,7 @@ package com.uriel.musicjam.features.home.presentation.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.uriel.musicjam.core.network.Result
+import com.uriel.musicjam.features.authspotify.domain.usecases.ExchangeSpotifyCodeUseCase
 import com.uriel.musicjam.features.home.domain.usecases.GetMyAlbumsUseCase
 import com.uriel.musicjam.features.home.domain.usecases.GetMyProfileUseCase
 import com.uriel.musicjam.features.home.domain.usecases.GetMyTopTracksUseCase
@@ -18,7 +19,8 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val getMyProfile: GetMyProfileUseCase,
     private val getMyAlbums: GetMyAlbumsUseCase,
-    private val getMyTopTracks: GetMyTopTracksUseCase
+    private val getMyTopTracks: GetMyTopTracksUseCase,
+    private val exchangeSpotifyCodeUseCase: ExchangeSpotifyCodeUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -58,5 +60,63 @@ class HomeViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    fun openProfileModal() {
+        _uiState.update { it.copy(showProfileModal = true) }
+    }
+
+    fun closeProfileModal() {
+        _uiState.update { it.copy(showProfileModal = false, spotifyLinkError = null) }
+    }
+
+    fun exchangeSpotifyCode(code: String) {
+        // LOG 3: ¿Llegó al ViewModel?
+        android.util.Log.d("SpotifyAuth", "HomeViewModel - Iniciando exchangeSpotifyCode con: $code")
+
+        // 1. Aquí encendemos la carga
+        _uiState.update { it.copy(isLinkingSpotify = true, spotifyLinkError = null) }
+
+        viewModelScope.launch {
+            val result = exchangeSpotifyCodeUseCase(code)
+
+            // LOG 4: ¿Qué nos devolvió el caso de uso?
+            android.util.Log.d("SpotifyAuth", "HomeViewModel - Resultado del UseCase: $result")
+
+            when (result) {
+                is Result.Success<*> -> {
+                    android.util.Log.d("SpotifyAuth", "HomeViewModel - ¡Éxito al vincular!")
+
+                    // 2. Apagamos la carga, cerramos el modal y disparamos el éxito
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            isLinkingSpotify = false,
+                            spotifyLinkSuccess = true,
+                            showProfileModal = false
+                        )
+                    }
+
+                    // 3. ¡Recargamos la vista para mostrar las canciones de Spotify!
+                    loadHomeData()
+                }
+                is Result.Error -> {
+                    android.util.Log.e("SpotifyAuth", "HomeViewModel - Fallo la vinculación: ${result.message}")
+
+                    // 2. Apagamos la carga y mostramos el error
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            isLinkingSpotify = false,
+                            spotifyLinkError = result.message
+                        )
+                    }
+                }
+                is Result.Loading -> {}
+            }
+        }
+    }
+
+
+    fun clearSpotifyError() {
+        _uiState.update { it.copy(spotifyLinkError = null) }
     }
 }

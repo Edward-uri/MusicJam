@@ -1,6 +1,7 @@
 package com.uriel.musicjam.features.home.presentation.components
 
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -18,7 +19,8 @@ import com.uriel.musicjam.features.home.domain.entities.UserProfile
 @Composable
 fun HomeHeader(
     profile: UserProfile?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    activation: () -> Unit,
 ) {
     Row(
         modifier = modifier
@@ -43,6 +45,9 @@ fun HomeHeader(
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
+                .clickable {
+                    activation()
+                }
         )
     }
 }
