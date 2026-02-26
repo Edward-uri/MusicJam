@@ -35,6 +35,7 @@ class PlayerViewModel @Inject constructor(
     private val getSpotifyAccessToken: GetSpotifyAccessTokenUseCase,
     private val jamWebSocket: JamWebSocketManager,
     private val jamCodeManager: JamCodeManager,
+    private val getShareLinkUseCase: GetShareLinkUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlayerUiState())
@@ -79,6 +80,59 @@ class PlayerViewModel @Inject constructor(
 
     fun onJoinCodeChanged(code: String) {
         _uiState.update { it.copy(joinCode = code) }
+    }
+
+    fun initializePlayer(context: Context, trackId: String?) {
+        // Si la jam ya está cargada en memoria, no hacemos doble inicialización
+        if (_uiState.value.jam != null) {
+            // Si estábamos activos y mandaron un track nuevo, lo reproducimos en la jam actual
+            if (trackId != null) {
+                val joinCode = _uiState.value.jam!!.joinCode
+                viewModelScope.launch {
+                    queueTrackUseCase(joinCode, trackId)
+                    nextTrackUseCase(joinCode)
+                }
+            }
+            return
+        }
+
+        val savedJoinCode = jamCodeManager.getActiveJoinCode()
+
+        if (savedJoinCode != null) {
+            // 1. Hay una Jam previa guardada, intentamos restaurarla
+            _uiState.update { it.copy(joinCode = savedJoinCode, isLoading = true) }
+
+            viewModelScope.launch {
+                when (val result = joinJamUseCase(savedJoinCode)) {
+                    is Result.Success -> {
+                        // Restauración exitosa
+                        _uiState.update { it.copy(isLoading = false, jam = result.data) }
+                        connectSpotify(context)
+                        startWebSocket(result.data.joinCode)
+
+                        // Si el usuario entró haciendo clic en una canción nueva, la reproducimos
+                        if (trackId != null) {
+                            queueTrackUseCase(savedJoinCode, trackId)
+                            nextTrackUseCase(savedJoinCode)
+                        }
+                    }
+                    is Result.Error -> {
+                        // 2. Falló la reconexión (probablemente la Jam ya no existe en el backend)
+                        jamCodeManager.clearActiveJoinCode()
+                        _uiState.update { it.copy(isLoading = false, joinCode = "") }
+
+                        // Si venía con un trackId, creamos una jam desde cero
+                        if (trackId != null) {
+                            createJamAndPlay(context, trackId)
+                        }
+                    }
+                    else -> {}
+                }
+            }
+        } else if (trackId != null) {
+            // 3. No hay Jam guardada, creamos una nueva usando la canción
+            createJamAndPlay(context, trackId)
+        }
     }
 
     fun createJam(context: Context) {
@@ -382,5 +436,36 @@ class PlayerViewModel @Inject constructor(
         Log.d("PlayerProgress", "⏸️ Timer DETENIDO.")
         progressJob?.cancel()
         progressJob = null
+    }
+
+
+    fun openShareDialog() {
+        val joinCode = _uiState.value.jam?.joinCode ?: return
+
+        // Abrimos el diálogo y mostramos estado de carga
+        _uiState.update {
+            it.copy(
+                isShareDialogOpen = true,
+                isLoadingShareLink = true,
+                shareLinkError = null,
+                shareLink = null
+            )
+        }
+
+        viewModelScope.launch {
+            when (val result = getShareLinkUseCase(joinCode)) {
+                is Result.Success -> {
+                    _uiState.update { it.copy(isLoadingShareLink = false, shareLink = result.data) }
+                }
+                is Result.Error -> {
+                    _uiState.update { it.copy(isLoadingShareLink = false, shareLinkError = result.message) }
+                }
+                else -> {}
+            }
+        }
+    }
+
+    fun closeShareDialog() {
+        _uiState.update { it.copy(isShareDialogOpen = false) }
     }
 }

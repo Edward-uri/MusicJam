@@ -15,5 +15,11 @@ data class PlayerUiState(
     val currentTrackName: String? = null,
     val currentArtist: String? = null,
     val currentAlbumCover: String? = null,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+
+    // Estados para el modal de compartir
+    val isShareDialogOpen: Boolean = false,
+    val shareLink: String? = null,
+    val isLoadingShareLink: Boolean = false,
+    val shareLinkError: String? = null
 )
