@@ -39,7 +39,7 @@ class PlayerViewModel @Inject constructor(
     val uiState: StateFlow<PlayerUiState> = _uiState.asStateFlow()
 
     private var wsJob: Job? = null
-
+    private var progressJob: Job? = null
     // ─────────────────────────────────────────────
     // Spotify SDK
     // ─────────────────────────────────────────────
@@ -114,12 +114,20 @@ class PlayerViewModel @Inject constructor(
     }
 
     fun leaveJam() {
-        val joinCode = _uiState.value.jam?.joinCode ?: return
+        val currentJam = _uiState.value.jam ?: return
+        val joinCode = currentJam.joinCode
+
         viewModelScope.launch {
+            spotifyRemote.pause()
+
+
             leaveJamUseCase(joinCode)
+
             wsJob?.cancel()
+            stopProgressTimer()
             launch { jamWebSocket.disconnect() }
             spotifyRemote.disconnect()
+
             _uiState.update { PlayerUiState() }
         }
     }
@@ -147,11 +155,18 @@ class PlayerViewModel @Inject constructor(
     }
 
     private fun handleJamEvent(event: JamEventDto) {
-        val track = event.state.track
+        val state = event.state ?: return
 
-        // Actualiza la UI con el estado recibido del servidor
+        val track = state.track
+        val previousState = _uiState.value
+
+        // 1. Sabemos que la música debe avanzar si el evento es PLAYING o TRACK_CHANGED
+        val isNowPlaying = event.eventType == "PLAYING" || event.eventType == "TRACK_CHANGED"
+
+        // 2. Actualizamos el UiState (Asegúrate de incluir isPlaying)
         _uiState.update {
             it.copy(
+                isPlaying = isNowPlaying, // <-- ESTO ARREGLA EL BOTÓN DE PLAY/PAUSE
                 progressMs = event.state.progressMs,
                 durationMs = track?.durationMs ?: it.durationMs,
                 currentTrackId = track?.id,
@@ -161,22 +176,37 @@ class PlayerViewModel @Inject constructor(
             )
         }
 
+        // 3. Encendemos o apagamos la barra de progreso de la UI
+        if (isNowPlaying) {
+            startProgressTimer()
+        } else {
+            stopProgressTimer()
+        }
+
+        // 4. Control del SDK local de Spotify
         when (event.eventType) {
-            "PLAYING" -> {
-                track?.let {
-                    Log.d("PlayerVM", "Play local: spotify:track:${it.id}")
-                    spotifyRemote.play("spotify:track:${it.id}")
-                }
+            "PLAYING", "TRACK_CHANGED" -> {
+                /*track?.let {
+                    // Validamos si es la misma canción que ya estaba en el reproductor
+                    if (previousState.currentTrackId == it.id) {
+                        // Si es la misma canción y el evento es PLAYING, solo le quitamos la pausa (resume)
+                        // Si el evento es TRACK_CHANGED pero es la misma canción, se ignora para no reiniciarla
+                        if (event.eventType == "PLAYING") {
+                            Log.d("PlayerVM", "Resume local")
+                            spotifyRemote.resume()
+                        } else {
+                            Log.d("PlayerVM", "Ignorando TRACK_CHANGED repetido para: ${it.id}")
+                        }
+                    } else {
+                        // Es una canción nueva, por lo tanto inicia desde el principio
+                        Log.d("PlayerVM", "Play local: spotify:track:${it.id}")
+                        spotifyRemote.play("spotify:track:${it.id}")
+                    }
+                }*/
             }
             "PAUSED" -> {
-                Log.d("PlayerVM", "⏸️ Pause local")
-                spotifyRemote.pause()
-            }
-            "TRACK_CHANGED" -> {
-                track?.let {
-                    Log.d("PlayerVM", "Track changed: spotify:track:${it.id}")
-                    spotifyRemote.play("spotify:track:${it.id}")
-                }
+                /*Log.d("PlayerVM", "Pause local")
+                spotifyRemote.pause()*/
             }
         }
     }
@@ -207,24 +237,19 @@ class PlayerViewModel @Inject constructor(
                     val joinCode = result.data.joinCode
                     _uiState.update { it.copy(isLoading = false, jam = result.data) }
 
-                    // 1. Conecta SDK
+                    // 1. Conecta el SDK de Spotify localmente
                     connectSpotify(context)
 
-                    // 2. SDK activa Spotify localmente con la canción
-                    //    Esto "despierta" el dispositivo para que el backend pueda controlarlo
-                    spotifyRemote.play("spotify:track:$trackId")
+                    // 2. Iniciamos el WebSocket ANTES de mandar comandos
+                    // para asegurar que escuchemos el evento de cambio de canción
+                    startWebSocket(joinCode)
 
-                    // 3. Pequeño delay para que Spotify registre el dispositivo activo
-                    delay(1500)
-
-                    // 4. Encola en el backend
+                    // 3. Encolamos la canción seleccionada en el backend
                     queueTrackUseCase(joinCode, trackId)
 
-                    // 5. Backend toma control
-                    playUseCase(joinCode)
-
-                    // 6. WebSocket escucha eventos
-                    startWebSocket(joinCode)
+                    // 4. Forzamos a Spotify a saltar a la siguiente canción en la cola
+                    // (que será exactamente la que acabamos de encolar)
+                    nextTrackUseCase(joinCode)
                 }
                 is Result.Error -> _uiState.update {
                     it.copy(isLoading = false, errorMessage = result.message)
@@ -312,6 +337,45 @@ class PlayerViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         wsJob?.cancel()
+        stopProgressTimer() // <-- Añade esto
         spotifyRemote.disconnect()
+    }
+
+    private fun startProgressTimer() {
+        if (progressJob?.isActive == true) {
+            Log.d("PlayerProgress", "⏱️ El timer ya está corriendo. Ignorando nueva petición.")
+            return
+        }
+
+        Log.d("PlayerProgress", "▶️ ¡Timer INICIADO!")
+
+        progressJob = viewModelScope.launch {
+            while (true) {
+                delay(1000) // Un segundo exacto
+                _uiState.update { currentState ->
+                    val newProgress = currentState.progressMs + 1000
+                    val duration = currentState.durationMs
+
+                    // Calculamos el porcentaje para el log (solo informativo)
+                    val percent = if (duration > 0) (newProgress.toFloat() / duration) * 100 else 0f
+
+                    Log.d("PlayerProgress", "⏱️ Tick! Progreso: $newProgress ms / $duration ms (${percent.toInt()}%)")
+
+                    // Solo avanzamos si no hemos superado el tiempo de la canción (con 2 segundos de tolerancia)
+                    if (duration == 0L || newProgress <= duration + 2000) {
+                        currentState.copy(progressMs = newProgress) // Al usar copy, forzamos a redibujar la UI
+                    } else {
+                        Log.d("PlayerProgress", "⏹️ Límite de la canción alcanzado. Congelando barra.")
+                        currentState
+                    }
+                }
+            }
+        }
+    }
+
+    private fun stopProgressTimer() {
+        Log.d("PlayerProgress", "⏸️ Timer DETENIDO.")
+        progressJob?.cancel()
+        progressJob = null
     }
 }

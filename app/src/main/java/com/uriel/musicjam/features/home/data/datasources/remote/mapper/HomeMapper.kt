@@ -11,7 +11,8 @@ fun SpotifyTrackDto.toDomain() = SpotifyTrack(
     id = id,
     name = name,
     artist = artist,
-    imageUrl = imageUrl
+    imageUrl = imageUrl,
+    durationMs = durationMs
 )
 
 fun SpotifyAlbumDto.toDomain() = SpotifyAlbum(

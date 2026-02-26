@@ -4,5 +4,6 @@ data class SpotifyTrack(
     val id: String,
     val name: String,
     val artist: String,
-    val imageUrl: String
+    val imageUrl: String,
+    val durationMs: Long = 0L
 )
