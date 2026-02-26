@@ -175,7 +175,9 @@ fun HomeScreen(
                     uiState.topTracks.forEach { track ->
                         TrackItem(
                             track = track,
-                            onClick = { onTrackClick(track) }
+                            onClick = { onTrackClick(track) },
+                            isQueued = false,
+                            onAddToQueue = {},
                         )
                     }
                 }

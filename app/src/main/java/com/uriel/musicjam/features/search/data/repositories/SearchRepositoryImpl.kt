@@ -19,4 +19,17 @@ class SearchRepositoryImpl @Inject constructor(
             Result.Error(e.message ?: "Error en la búsqueda")
         }
     }
+
+    override suspend fun queueTrack(trackId: String): Result<Unit> {
+        return try {
+            val response = api.queueTrack(trackId)
+            if (response.success) {
+                Result.Success(Unit)
+            } else {
+                Result.Error(response.message ?: "Error al añadir a la cola")
+            }
+        } catch (e: Exception) {
+            Result.Error(e.message ?: "Error de red")
+        }
+    }
 }

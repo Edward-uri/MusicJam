@@ -5,4 +5,6 @@ import com.uriel.musicjam.features.home.domain.entities.SpotifyTrack
 
 interface SearchRepository {
     suspend fun searchTracks(query: String): Result<List<SpotifyTrack>>
+
+    suspend fun queueTrack(trackId: String): Result<Unit>
 }
