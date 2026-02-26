@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -22,6 +23,7 @@ import com.uriel.musicjam.features.home.domain.entities.SpotifyTrack
 import com.uriel.musicjam.features.home.presentation.components.AlbumsRow
 import com.uriel.musicjam.features.home.presentation.components.HomeBottomBar
 import com.uriel.musicjam.features.home.presentation.components.HomeHeader
+import com.uriel.musicjam.features.home.presentation.components.ProfileModal
 import com.uriel.musicjam.features.home.presentation.components.TrackItem
 import com.uriel.musicjam.features.home.presentation.viewmodels.HomeViewModel
 
@@ -34,6 +36,28 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: AppScreens.Home.route
+
+    val context = LocalContext.current
+
+    if (uiState.showProfileModal) {
+        ProfileModal(
+            userProfile = uiState.profile,
+            isLinkingSpotify = uiState.isLinkingSpotify,
+            onDismiss = { viewModel.closeProfileModal() },
+            onLinkSpotifyClick = {
+                // Aquí construimos la URL y abrimos el navegador
+                val clientId = "TU_CLIENT_ID_DE_SPOTIFY"
+                val redirectUri = "musicjam://callback" // Esto lo configuraremos en el Manifest luego
+                val scopes = "user-read-playback-state user-modify-playback-state user-read-currently-playing app-remote-control streaming playlist-read-private playlist-read-collaborative user-read-private user-read-email"
+
+                val authUrl = "https://accounts.spotify.com/authorize?client_id=$clientId&response_type=code&redirect_uri=$redirectUri&scope=$scopes&show_dialog=true"
+
+                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(authUrl))
+                context.startActivity(intent)
+            }
+        )
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -47,7 +71,7 @@ fun HomeScreen(
             contentPadding = PaddingValues(bottom = 120.dp)
         ) {
             item {
-                HomeHeader(profile = uiState.profile)
+                HomeHeader(profile = uiState.profile, activation = { viewModel.openProfileModal() })
                 Spacer(Modifier.height(24.dp))
             }
             item {

@@ -3,6 +3,7 @@ package com.uriel.musicjam.features.home.presentation.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.uriel.musicjam.core.network.Result
+import com.uriel.musicjam.features.authspotify.domain.usecases.ExchangeSpotifyCodeUseCase
 import com.uriel.musicjam.features.home.domain.usecases.GetMyAlbumsUseCase
 import com.uriel.musicjam.features.home.domain.usecases.GetMyProfileUseCase
 import com.uriel.musicjam.features.home.domain.usecases.GetMyTopTracksUseCase
@@ -18,7 +19,8 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val getMyProfile: GetMyProfileUseCase,
     private val getMyAlbums: GetMyAlbumsUseCase,
-    private val getMyTopTracks: GetMyTopTracksUseCase
+    private val getMyTopTracks: GetMyTopTracksUseCase,
+    private val exchangeSpotifyCodeUseCase: ExchangeSpotifyCodeUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -58,5 +60,43 @@ class HomeViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    fun openProfileModal() {
+        _uiState.update { it.copy(showProfileModal = true) }
+    }
+
+    fun closeProfileModal() {
+        _uiState.update { it.copy(showProfileModal = false, spotifyLinkError = null) }
+    }
+
+    // Esta función se llamará cuando la app capture el "code" de la URL de redirección
+    fun exchangeSpotifyCode(code: String) {
+        _uiState.update { it.copy(isLinkingSpotify = true, spotifyLinkError = null) }
+
+        viewModelScope.launch {
+            val result = exchangeSpotifyCodeUseCase(code)
+            _uiState.update { currentState ->
+                result.fold(
+                    onSuccess = {
+                        currentState.copy(
+                            isLinkingSpotify = false,
+                            spotifyLinkSuccess = true,
+                            showProfileModal = false // Cerramos el modal al tener éxito
+                        )
+                    },
+                    onFailure = { error ->
+                        currentState.copy(
+                            isLinkingSpotify = false,
+                            spotifyLinkError = error.message
+                        )
+                    }
+                )
+            }
+        }
+    }
+
+    fun clearSpotifyError() {
+        _uiState.update { it.copy(spotifyLinkError = null) }
     }
 }
