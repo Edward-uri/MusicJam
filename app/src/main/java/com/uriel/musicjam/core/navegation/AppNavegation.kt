@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import com.uriel.musicjam.features.auth.presentation.screens.LoginScreen
 import com.uriel.musicjam.features.auth.presentation.screens.SignUpScreen
 import com.uriel.musicjam.features.home.presentation.screens.HomeScreen
+import com.uriel.musicjam.features.search.presentation.screens.SearchScreen
 
 @Composable
 fun AppNavigation() {
@@ -55,7 +56,7 @@ fun AppNavigation() {
             )
         }
         composable(AppScreens.Search.route) {
-            // SearchScreen()
+            SearchScreen()
         }
 
         composable(AppScreens.Library.route) {
