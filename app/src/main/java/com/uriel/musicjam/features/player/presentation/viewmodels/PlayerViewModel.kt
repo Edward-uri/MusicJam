@@ -180,14 +180,19 @@ class PlayerViewModel @Inject constructor(
         when (event.eventType) {
             "PLAYING" -> {
                 track?.let {
-                    Log.d("PlayerVM", "Play local: spotify:track:${it.id}")
-                    // Nota: Idealmente aquí usaremos resume() si es la misma canción,
-                    // pero por ahora mantengamos tu play() para probar la barra.
-                    spotifyRemote.play("spotify:track:${it.id}")
+                    // Validamos si es la misma canción que ya estaba en el reproductor
+                    if (previousState.currentTrackId == it.id) {
+                        Log.d("PlayerVM", "Resume local")
+                        spotifyRemote.resume()
+                    } else {
+                        // Es una canción nueva, por lo tanto inicia desde el principio
+                        Log.d("PlayerVM", "Play local: spotify:track:${it.id}")
+                        spotifyRemote.play("spotify:track:${it.id}")
+                    }
                 }
             }
             "PAUSED" -> {
-                Log.d("PlayerVM", "⏸️ Pause local")
+                Log.d("PlayerVM", "Pause local")
                 spotifyRemote.pause()
             }
             "TRACK_CHANGED" -> {
