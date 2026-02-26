@@ -74,6 +74,7 @@ class HomeViewModel @Inject constructor(
         // LOG 3: ¿Llegó al ViewModel?
         android.util.Log.d("SpotifyAuth", "HomeViewModel - Iniciando exchangeSpotifyCode con: $code")
 
+        // 1. Aquí encendemos la carga
         _uiState.update { it.copy(isLinkingSpotify = true, spotifyLinkError = null) }
 
         viewModelScope.launch {
@@ -85,11 +86,29 @@ class HomeViewModel @Inject constructor(
             when (result) {
                 is Result.Success<*> -> {
                     android.util.Log.d("SpotifyAuth", "HomeViewModel - ¡Éxito al vincular!")
-                    // ... (tu código de éxito) ...
+
+                    // 2. Apagamos la carga, cerramos el modal y disparamos el éxito
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            isLinkingSpotify = false,
+                            spotifyLinkSuccess = true,
+                            showProfileModal = false
+                        )
+                    }
+
+                    // 3. ¡Recargamos la vista para mostrar las canciones de Spotify!
+                    loadHomeData()
                 }
                 is Result.Error -> {
                     android.util.Log.e("SpotifyAuth", "HomeViewModel - Fallo la vinculación: ${result.message}")
-                    // ... (tu código de error) ...
+
+                    // 2. Apagamos la carga y mostramos el error
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            isLinkingSpotify = false,
+                            spotifyLinkError = result.message
+                        )
+                    }
                 }
                 is Result.Loading -> {}
             }

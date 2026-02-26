@@ -97,7 +97,7 @@ fun HomeScreen(
             onLinkSpotifyClick = {
                 val clientId = "8be0a4f09a6c4c3a9283f04f39cffc32"
                 val redirectUri = "musicjam://callback"
-                val scopes = "user-read-playback-state user-modify-playback-state user-read-currently-playing app-remote-control streaming playlist-read-private playlist-read-collaborative user-read-private user-read-email"
+                val scopes = "user-top-read user-library-read user-read-playback-state user-modify-playback-state user-read-currently-playing app-remote-control streaming playlist-read-private playlist-read-collaborative user-read-private user-read-email"
 
                 // Usamos Uri.Builder para construir la URL oficial de Spotify de forma segura
                 val authUri = android.net.Uri.parse("https://accounts.spotify.com/authorize")
