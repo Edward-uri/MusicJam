@@ -20,9 +20,9 @@ class SearchRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun queueTrack(trackId: String): Result<Unit> {
+    override suspend fun queueTrack(joinCode: String, trackId: String): Result<Unit> {
         return try {
-            val response = api.queueTrack(trackId)
+            val response = api.queueTrack(joinCode, trackId)
             if (response.success) {
                 Result.Success(Unit)
             } else {

@@ -4,6 +4,7 @@ import com.uriel.musicjam.features.auth.data.datasources.remote.dtos.BaseRespons
 import com.uriel.musicjam.features.home.data.datasources.remote.models.SpotifyTrackDto
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface SearchApiService {
@@ -12,8 +13,9 @@ interface SearchApiService {
         @Query("q") query: String
     ): BaseResponse<List<SpotifyTrackDto>>
 
-    @POST("jams/DUMMY_CODE/player/queue")
+    @POST("jams/{joinCode}/player/queue")
     suspend fun queueTrack(
+        @Path("joinCode") joinCode: String, // <-- Anotación @Path para reemplazar {joinCode}
         @Query("trackId") trackId: String
     ): BaseResponse<Any>
 }
