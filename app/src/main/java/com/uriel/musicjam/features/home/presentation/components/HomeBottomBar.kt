@@ -102,8 +102,7 @@ fun HomeBottomBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
-                .padding(horizontal = 12.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
+                .padding(horizontal = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             items.forEach { item ->
@@ -129,36 +128,44 @@ fun HomeBottomBar(
                     animationSpec = tween(durationMillis = 200),
                     label = "scale"
                 )
+
+
                 Box(
                     modifier = Modifier
-                        .then(
-                            if (isSelected) {
-                                Modifier.background(
-                                    color = Color.White.copy(alpha = 0.15f),
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                            } else Modifier
-                        )
-                        .padding(horizontal = horizontalPadding, vertical = 8.dp)
+                        .weight(1f)
+                        .fillMaxHeight()
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
-                        ) { onNavigate(item.route) }
-                        .graphicsLayer {
-                            scaleX = scale
-                            scaleY = scale
-                        },
+                        ) { onNavigate(item.route) },
                     contentAlignment = Alignment.Center
-                )
- {
-                    Icon(
-                        imageVector = item.icon,
-                        contentDescription = item.label,
+                ) {
+                    Box(
                         modifier = Modifier
-                            .size(iconSize)
-                            .graphicsLayer { alpha = iconAlpha },
-                        tint = Color.White
-                    )
+                            .then(
+                                if (isSelected) {
+                                    Modifier.background(
+                                        color = Color.White.copy(alpha = 0.15f),
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                                } else Modifier
+                            )
+                            .padding(horizontal = horizontalPadding, vertical = 8.dp)
+                            .graphicsLayer {
+                                scaleX = scale
+                                scaleY = scale
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = item.icon,
+                            contentDescription = item.label,
+                            modifier = Modifier
+                                .size(iconSize)
+                                .graphicsLayer { alpha = iconAlpha },
+                            tint = Color.White
+                        )
+                    }
                 }
             }
         }

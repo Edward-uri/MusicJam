@@ -48,7 +48,6 @@ fun HomeScreen(
     val context = LocalContext.current
     val activity = context as? ComponentActivity
 
-    // 1. Escuchar el Intent si la app ya estaba abierta (El caso cuando vuelves de Spotify)
     DisposableEffect(activity) {
         val listener = Consumer<Intent> { newIntent ->
             val uri = newIntent.data
@@ -57,7 +56,7 @@ fun HomeScreen(
             if (code != null) {
                 Log.d("SpotifyAuth", "¡Código atrapado por el sistema!: $code")
                 viewModel.exchangeSpotifyCode(code)
-                newIntent.data = null // Limpiamos la URL para que no se dispare dos veces
+                newIntent.data = null 
             }
         }
         activity?.addOnNewIntentListener(listener)
@@ -67,18 +66,16 @@ fun HomeScreen(
         }
     }
 
-    // 2. Por si acaso: Revisar el Intent original por si la app estaba completamente cerrada
     LaunchedEffect(activity) {
         val uri = activity?.intent?.data
         val code = uri?.getQueryParameter("code")
         if (code != null) {
-            android.util.Log.d("SpotifyAuth", "¡Código atrapado al abrir la app!: $code")
+            Log.d("SpotifyAuth", "¡Código atrapado al abrir la app!: $code")
             viewModel.exchangeSpotifyCode(code)
             activity?.intent?.data = null
         }
     }
 
-    // 3. Escuchar los mensajes de éxito/error del ViewModel
     LaunchedEffect(key1 = uiState.spotifyLinkSuccess, key2 = uiState.spotifyLinkError) {
         if (uiState.spotifyLinkSuccess) {
             Toast.makeText(context, "¡Cuenta de Spotify vinculada!", Toast.LENGTH_LONG).show()
@@ -99,34 +96,45 @@ fun HomeScreen(
                 val redirectUri = "musicjam://callback"
                 val scopes = "user-top-read user-library-read user-read-playback-state user-modify-playback-state user-read-currently-playing app-remote-control streaming playlist-read-private playlist-read-collaborative user-read-private user-read-email"
 
-                // Usamos Uri.Builder para construir la URL oficial de Spotify de forma segura
                 val authUri = android.net.Uri.parse("https://accounts.spotify.com/authorize")
                     .buildUpon()
                     .appendQueryParameter("client_id", clientId)
-                    .appendQueryParameter("response_type", "code") // Le decimos que queremos el código
+                    .appendQueryParameter("response_type", "code") 
                     .appendQueryParameter("redirect_uri", redirectUri)
                     .appendQueryParameter("scope", scopes)
-                    .appendQueryParameter("show_dialog", "true") // Fuerza la pantalla de login de Spotify
+                    .appendQueryParameter("show_dialog", "true") 
                     .build()
 
-                // Lanzamos el navegador con la URI ya construida y formateada
-                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, authUri)
+                val intent = Intent(Intent.ACTION_VIEW, authUri)
                 context.startActivity(intent)
             }
         )
     }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFFDF5E6))
-            .windowInsetsPadding(WindowInsets.systemBars)
-    ) {
+    Scaffold(
+        containerColor = Color(0xFFFDF5E6),
+        bottomBar = {
+            HomeBottomBar(
+                currentRoute = AppScreens.Home.route,
+                onNavigate = { route ->
+                    if (route != AppScreens.Home.route) {
+                        navController.navigate(route) {
+                            popUpTo(AppScreens.Home.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(bottom = 120.dp)
+            contentPadding = PaddingValues(
+                top = paddingValues.calculateTopPadding() + 16.dp, 
+                bottom = paddingValues.calculateBottomPadding() + 16.dp 
+            )
         ) {
             item {
                 HomeHeader(profile = uiState.profile, activation = { viewModel.openProfileModal() })
@@ -152,7 +160,6 @@ fun HomeScreen(
                 )
                 Spacer(Modifier.height(12.dp))
             }
-
             item {
                 Column(
                     modifier = Modifier
@@ -174,20 +181,5 @@ fun HomeScreen(
                 }
             }
         }
-
-        HomeBottomBar(
-            modifier = Modifier.align(Alignment.BottomCenter),
-            currentRoute = currentRoute,
-            onNavigate = { route ->
-                if (route != currentRoute) {
-                    navController.navigate(route) {
-                        popUpTo(AppScreens.Home.route) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                }
-            }
-        )
     }
-
 }
