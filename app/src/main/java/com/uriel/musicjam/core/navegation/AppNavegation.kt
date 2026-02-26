@@ -10,6 +10,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.uriel.musicjam.features.auth.presentation.screens.LoginScreen
 import com.uriel.musicjam.features.auth.presentation.screens.SignUpScreen
 import com.uriel.musicjam.features.home.presentation.screens.HomeScreen
@@ -65,7 +67,12 @@ fun AppNavigation() {
         composable(AppScreens.Home.route) {
             HomeScreen(
                 navController = navController,
-                onTrackClick = { track -> }
+                onTrackClick = { track ->
+                    // navController.navigate(AppScreens.Player.createRoute(track.id))
+                },
+                onNavigate = { route ->
+                    navController.navigate(route)
+                }
             )
         }
 

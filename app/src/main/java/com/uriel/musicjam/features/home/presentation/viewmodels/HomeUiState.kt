@@ -9,5 +9,10 @@ data class HomeUiState(
     val albums: List<SpotifyAlbum> = emptyList(),
     val topTracks: List<SpotifyTrack> = emptyList(),
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+
+    val showProfileModal: Boolean = false,
+    val isLinkingSpotify: Boolean = false,
+    val spotifyLinkSuccess: Boolean = false,
+    val spotifyLinkError: String? = null
 )
