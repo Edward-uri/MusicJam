@@ -38,6 +38,11 @@ fun PlayerScreen(
         }
     }
 
+    LaunchedEffect(trackId) {
+        // Llamamos a la nueva función de inicialización inteligente
+        viewModel.initializePlayer(context, trackId)
+    }
+
 
     Box(
         modifier = Modifier
