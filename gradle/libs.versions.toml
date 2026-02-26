@@ -21,7 +21,7 @@ hiltNavigationCompose = "1.3.0"     # Procesador de anotaciones (puedes usar kap
 ksp = "2.3.2"               # Asegúrate de que coincida con tu versión de Kotlin
 palette = "1.0.0"
 spotify-auth = "2.1.0"
-spotify-remote = "0.8.0"
+#spotify-remote = "0.8.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -51,9 +51,8 @@ androidx-compose-material-icons-extended = { group = "androidx.compose.material"
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
 hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
-
 spotify-auth = { group = "com.spotify.android", name = "auth", version.ref = "spotify-auth" }
-spotify-app-remote = { group = "com.spotify.android", name = "app-remote", version.ref = "spotify-remote" }
+#spotify-app-remote = { group = "com.spotify.android", name = "app-remote", version.ref = "spotify-remote" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

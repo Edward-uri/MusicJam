@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -43,10 +44,11 @@ fun HomeBottomBar(
     onNavigate: (String) -> Unit = {}
 ) {
     val items = listOf(
-        BottomNavItem("Inicio",     Icons.Default.Home,         AppScreens.Home.route),
-        BottomNavItem("Biblioteca", Icons.Default.LibraryMusic, AppScreens.Library.route),
-        BottomNavItem("Buscar",     Icons.Default.Search,       AppScreens.Search.route)
+        BottomNavItem("Inicio",  Icons.Default.Home,      AppScreens.Home.route),
+        BottomNavItem("Buscar",  Icons.Default.Search,    AppScreens.Search.route),
+        BottomNavItem("Player",  Icons.Default.MusicNote, AppScreens.Player.route)
     )
+
 
     Box(
         modifier = modifier
