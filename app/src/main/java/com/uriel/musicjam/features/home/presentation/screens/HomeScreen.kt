@@ -1,11 +1,13 @@
 package com.uriel.musicjam.features.home.presentation.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,7 +33,9 @@ import com.uriel.musicjam.features.home.presentation.viewmodels.HomeViewModel
 fun HomeScreen(
     navController: NavController,
     onTrackClick: (SpotifyTrack) -> Unit,
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: HomeViewModel = hiltViewModel(),
+    spotifyCode: String? = null,
+    onNavigate: (String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -39,20 +43,44 @@ fun HomeScreen(
 
     val context = LocalContext.current
 
+    LaunchedEffect(key1 = spotifyCode) {
+        if (!spotifyCode.isNullOrBlank()) {
+            viewModel.exchangeSpotifyCode(spotifyCode)
+        }
+    }
+
+    LaunchedEffect(key1 = uiState.spotifyLinkSuccess, key2 = uiState.spotifyLinkError) {
+        if (uiState.spotifyLinkSuccess) {
+            Toast.makeText(context, "¡Cuenta de Spotify vinculada!", Toast.LENGTH_LONG).show()
+        }
+        if (uiState.spotifyLinkError != null) {
+            Toast.makeText(context, uiState.spotifyLinkError, Toast.LENGTH_LONG).show()
+            viewModel.clearSpotifyError()
+        }
+    }
+
     if (uiState.showProfileModal) {
         ProfileModal(
             userProfile = uiState.profile,
             isLinkingSpotify = uiState.isLinkingSpotify,
             onDismiss = { viewModel.closeProfileModal() },
             onLinkSpotifyClick = {
-                // Aquí construimos la URL y abrimos el navegador
-                val clientId = "TU_CLIENT_ID_DE_SPOTIFY"
-                val redirectUri = "musicjam://callback" // Esto lo configuraremos en el Manifest luego
+                val clientId = "8be0a4f09a6c4c3a9283f04f39cffc32"
+                val redirectUri = "musicjam://callback"
                 val scopes = "user-read-playback-state user-modify-playback-state user-read-currently-playing app-remote-control streaming playlist-read-private playlist-read-collaborative user-read-private user-read-email"
 
-                val authUrl = "https://accounts.spotify.com/authorize?client_id=$clientId&response_type=code&redirect_uri=$redirectUri&scope=$scopes&show_dialog=true"
+                // Usamos Uri.Builder para construir la URL oficial de Spotify de forma segura
+                val authUri = android.net.Uri.parse("https://accounts.spotify.com/authorize")
+                    .buildUpon()
+                    .appendQueryParameter("client_id", clientId)
+                    .appendQueryParameter("response_type", "code") // Le decimos que queremos el código
+                    .appendQueryParameter("redirect_uri", redirectUri)
+                    .appendQueryParameter("scope", scopes)
+                    .appendQueryParameter("show_dialog", "true") // Fuerza la pantalla de login de Spotify
+                    .build()
 
-                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(authUrl))
+                // Lanzamos el navegador con la URI ya construida y formateada
+                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, authUri)
                 context.startActivity(intent)
             }
         )

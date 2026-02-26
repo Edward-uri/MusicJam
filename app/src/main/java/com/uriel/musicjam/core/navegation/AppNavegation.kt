@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.uriel.musicjam.features.auth.presentation.screens.LoginScreen
 import com.uriel.musicjam.features.auth.presentation.screens.SignUpScreen
 import com.uriel.musicjam.features.home.presentation.screens.HomeScreen
@@ -46,11 +48,32 @@ fun AppNavigation() {
                 }
             )
         }
-        composable(AppScreens.Home.route) {
+        composable(
+            route = AppScreens.Home.route + "?code={code}",
+            arguments = listOf(
+                navArgument("code") {
+                    type = androidx.navigation.NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            ),
+            deepLinks = listOf(
+                navDeepLink {
+                    uriPattern = "musicjam://callback?code={code}" // ¡Aquí Compose extrae el código de la URL!
+                }
+            )
+        ) { backStackEntry ->
+
+            val spotifyCode = backStackEntry.arguments?.getString("code")
+
             HomeScreen(
                 navController = navController,
                 onTrackClick = { track ->
                     // navController.navigate(AppScreens.Player.createRoute(track.id))
+                },
+                spotifyCode = spotifyCode,
+                onNavigate = { route ->
+                    navController.navigate(route)
                 }
             )
         }
