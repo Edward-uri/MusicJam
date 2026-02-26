@@ -35,6 +35,7 @@ class PlayerViewModel @Inject constructor(
     private val getSpotifyAccessToken: GetSpotifyAccessTokenUseCase,
     private val jamWebSocket: JamWebSocketManager,
     private val jamCodeManager: JamCodeManager,
+    private val getShareLinkUseCase: GetShareLinkUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlayerUiState())
@@ -435,5 +436,36 @@ class PlayerViewModel @Inject constructor(
         Log.d("PlayerProgress", "⏸️ Timer DETENIDO.")
         progressJob?.cancel()
         progressJob = null
+    }
+
+
+    fun openShareDialog() {
+        val joinCode = _uiState.value.jam?.joinCode ?: return
+
+        // Abrimos el diálogo y mostramos estado de carga
+        _uiState.update {
+            it.copy(
+                isShareDialogOpen = true,
+                isLoadingShareLink = true,
+                shareLinkError = null,
+                shareLink = null
+            )
+        }
+
+        viewModelScope.launch {
+            when (val result = getShareLinkUseCase(joinCode)) {
+                is Result.Success -> {
+                    _uiState.update { it.copy(isLoadingShareLink = false, shareLink = result.data) }
+                }
+                is Result.Error -> {
+                    _uiState.update { it.copy(isLoadingShareLink = false, shareLinkError = result.message) }
+                }
+                else -> {}
+            }
+        }
+    }
+
+    fun closeShareDialog() {
+        _uiState.update { it.copy(isShareDialogOpen = false) }
     }
 }

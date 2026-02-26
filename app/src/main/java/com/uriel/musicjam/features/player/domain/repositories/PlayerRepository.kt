@@ -14,4 +14,5 @@ interface PlayerRepository {
     suspend fun nextMusic(joinCode: String): Result<Unit>
     suspend fun previous(joinCode: String): Result<Unit>
     suspend fun queueTrack(joinCode: String, trackId: String): Result<Unit>
+    suspend fun getShareLink(joinCode: String): Result<String>
 }

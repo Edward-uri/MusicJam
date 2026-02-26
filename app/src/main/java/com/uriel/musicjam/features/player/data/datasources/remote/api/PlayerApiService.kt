@@ -50,4 +50,9 @@ interface PlayerApiService {
         @Path("joinCode") joinCode: String,
         @Query("trackId") trackId: String
     ): BaseResponse<Void>
+
+    @GET("jams/{joinCode}/share")
+    suspend fun getShareLink(
+        @Path("joinCode") joinCode: String
+    ): BaseResponse<String>
 }

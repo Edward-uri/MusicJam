@@ -71,4 +71,17 @@ class PlayerRepositoryImpl @Inject constructor(
     } catch (e: Exception) {
         Result.Error(e.message ?: "Error al encolar canción")
     }
+
+    override suspend fun getShareLink(joinCode: String): Result<String> {
+        return try {
+            val response = api.getShareLink(joinCode)
+            if (response.success && response.data != null) {
+                Result.Success(response.data)
+            } else {
+                Result.Error(response.message ?: "Error al obtener enlace")
+            }
+        } catch (e: Exception) {
+            Result.Error(e.message ?: "Error de red")
+        }
+    }
 }

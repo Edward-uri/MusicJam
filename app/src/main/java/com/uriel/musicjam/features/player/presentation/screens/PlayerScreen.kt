@@ -1,6 +1,8 @@
 package com.uriel.musicjam.features.player.presentation.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -10,7 +12,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -78,7 +82,10 @@ fun PlayerScreen(
                         "Jam: ${uiState.jam?.joinCode}",
                         color = Color(0xFF1DB954),
                         fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .clickable { viewModel.openShareDialog() }
+                            .padding(8.dp),
                     )
                     TextButton(onClick = { viewModel.leaveJam() }) {
                         Text("Salir", color = Color.White.copy(alpha = 0.6f))
@@ -130,4 +137,84 @@ fun PlayerScreen(
             )
         }
     }
+
+    if (uiState.isShareDialogOpen) {
+        ShareJamDialog(
+            shareLink = uiState.shareLink,
+            isLoading = uiState.isLoadingShareLink,
+            errorMessage = uiState.shareLinkError,
+            onDismiss = { viewModel.closeShareDialog() }
+        )
+    }
+}
+
+@Composable
+fun ShareJamDialog(
+    shareLink: String?,
+    isLoading: Boolean,
+    errorMessage: String?,
+    onDismiss: () -> Unit
+) {
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+    var shareLink = shareLink?.split("//")[1]
+    shareLink = shareLink?.split("/")[1]
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF1A2C1A),
+        titleContentColor = Color.White,
+        textContentColor = Color.White,
+        title = {
+            Text("Compartir Jam", fontWeight = FontWeight.Bold)
+        },
+        text = {
+            when {
+                isLoading -> {
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Color(0xFF1DB954))
+                    }
+                }
+                errorMessage != null -> {
+                    Text("Error: $errorMessage", color = Color.Red)
+                }
+                shareLink != null -> {
+                    Column {
+                        Text(
+                            "Comparte este enlace con tus amigos para que se unan directamente:",
+                            fontSize = 14.sp,
+                            color = Color.LightGray
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = shareLink,
+                            color = Color(0xFF1DB954),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            if (shareLink != null) {
+                Button(
+                    onClick = {
+                        clipboardManager.setText(AnnotatedString(shareLink))
+                        Toast.makeText(context, "Enlace copiado al portapapeles", Toast.LENGTH_SHORT).show()
+                        onDismiss()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1DB954))
+                ) {
+                    Text("Copiar Enlace", color = Color.White)
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cerrar", color = Color.LightGray)
+            }
+        }
+    )
 }
