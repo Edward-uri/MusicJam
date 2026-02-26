@@ -70,31 +70,32 @@ class HomeViewModel @Inject constructor(
         _uiState.update { it.copy(showProfileModal = false, spotifyLinkError = null) }
     }
 
-    // Esta función se llamará cuando la app capture el "code" de la URL de redirección
     fun exchangeSpotifyCode(code: String) {
+        // LOG 3: ¿Llegó al ViewModel?
+        android.util.Log.d("SpotifyAuth", "HomeViewModel - Iniciando exchangeSpotifyCode con: $code")
+
         _uiState.update { it.copy(isLinkingSpotify = true, spotifyLinkError = null) }
 
         viewModelScope.launch {
             val result = exchangeSpotifyCodeUseCase(code)
-            _uiState.update { currentState ->
-                result.fold(
-                    onSuccess = {
-                        currentState.copy(
-                            isLinkingSpotify = false,
-                            spotifyLinkSuccess = true,
-                            showProfileModal = false // Cerramos el modal al tener éxito
-                        )
-                    },
-                    onFailure = { error ->
-                        currentState.copy(
-                            isLinkingSpotify = false,
-                            spotifyLinkError = error.message
-                        )
-                    }
-                )
+
+            // LOG 4: ¿Qué nos devolvió el caso de uso?
+            android.util.Log.d("SpotifyAuth", "HomeViewModel - Resultado del UseCase: $result")
+
+            when (result) {
+                is Result.Success<*> -> {
+                    android.util.Log.d("SpotifyAuth", "HomeViewModel - ¡Éxito al vincular!")
+                    // ... (tu código de éxito) ...
+                }
+                is Result.Error -> {
+                    android.util.Log.e("SpotifyAuth", "HomeViewModel - Fallo la vinculación: ${result.message}")
+                    // ... (tu código de error) ...
+                }
+                is Result.Loading -> {}
             }
         }
     }
+
 
     fun clearSpotifyError() {
         _uiState.update { it.copy(spotifyLinkError = null) }

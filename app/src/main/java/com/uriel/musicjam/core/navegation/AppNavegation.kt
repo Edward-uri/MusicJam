@@ -48,35 +48,19 @@ fun AppNavigation() {
                 }
             )
         }
-        composable(
-            route = AppScreens.Home.route + "?code={code}",
-            arguments = listOf(
-                navArgument("code") {
-                    type = androidx.navigation.NavType.StringType
-                    nullable = true
-                    defaultValue = null
-                }
-            ),
-            deepLinks = listOf(
-                navDeepLink {
-                    uriPattern = "musicjam://callback?code={code}" // ¡Aquí Compose extrae el código de la URL!
-                }
-            )
-        ) { backStackEntry ->
 
-            val spotifyCode = backStackEntry.arguments?.getString("code")
-
+        composable(AppScreens.Home.route) {
             HomeScreen(
                 navController = navController,
                 onTrackClick = { track ->
                     // navController.navigate(AppScreens.Player.createRoute(track.id))
                 },
-                spotifyCode = spotifyCode,
                 onNavigate = { route ->
                     navController.navigate(route)
                 }
             )
         }
+
         composable(AppScreens.Search.route) {
             // SearchScreen()
         }

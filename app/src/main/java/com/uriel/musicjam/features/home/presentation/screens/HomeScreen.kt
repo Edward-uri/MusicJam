@@ -1,12 +1,16 @@
 package com.uriel.musicjam.features.home.presentation.screens
 
+import android.content.Intent
+import android.util.Log
 import android.widget.Toast
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -28,13 +32,13 @@ import com.uriel.musicjam.features.home.presentation.components.HomeHeader
 import com.uriel.musicjam.features.home.presentation.components.ProfileModal
 import com.uriel.musicjam.features.home.presentation.components.TrackItem
 import com.uriel.musicjam.features.home.presentation.viewmodels.HomeViewModel
+import androidx.core.util.Consumer
 
 @Composable
 fun HomeScreen(
     navController: NavController,
     onTrackClick: (SpotifyTrack) -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
-    spotifyCode: String? = null,
     onNavigate: (String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -42,13 +46,39 @@ fun HomeScreen(
     val currentRoute = navBackStackEntry?.destination?.route ?: AppScreens.Home.route
 
     val context = LocalContext.current
+    val activity = context as? ComponentActivity
 
-    LaunchedEffect(key1 = spotifyCode) {
-        if (!spotifyCode.isNullOrBlank()) {
-            viewModel.exchangeSpotifyCode(spotifyCode)
+    // 1. Escuchar el Intent si la app ya estaba abierta (El caso cuando vuelves de Spotify)
+    DisposableEffect(activity) {
+        val listener = Consumer<Intent> { newIntent ->
+            val uri = newIntent.data
+            val code = uri?.getQueryParameter("code")
+
+            if (code != null) {
+                Log.d("SpotifyAuth", "¡Código atrapado por el sistema!: $code")
+                viewModel.exchangeSpotifyCode(code)
+                newIntent.data = null // Limpiamos la URL para que no se dispare dos veces
+            }
+        }
+        activity?.addOnNewIntentListener(listener)
+
+        onDispose {
+            activity?.removeOnNewIntentListener(listener)
         }
     }
 
+    // 2. Por si acaso: Revisar el Intent original por si la app estaba completamente cerrada
+    LaunchedEffect(activity) {
+        val uri = activity?.intent?.data
+        val code = uri?.getQueryParameter("code")
+        if (code != null) {
+            android.util.Log.d("SpotifyAuth", "¡Código atrapado al abrir la app!: $code")
+            viewModel.exchangeSpotifyCode(code)
+            activity?.intent?.data = null
+        }
+    }
+
+    // 3. Escuchar los mensajes de éxito/error del ViewModel
     LaunchedEffect(key1 = uiState.spotifyLinkSuccess, key2 = uiState.spotifyLinkError) {
         if (uiState.spotifyLinkSuccess) {
             Toast.makeText(context, "¡Cuenta de Spotify vinculada!", Toast.LENGTH_LONG).show()
