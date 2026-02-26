@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.uriel.musicjam.core.network.Result
 import com.uriel.musicjam.core.spotify.SpotifyRemoteManager
+import com.uriel.musicjam.core.storage.JamCodeManager
 import com.uriel.musicjam.core.ws.JamEventDto
 import com.uriel.musicjam.core.ws.JamWebSocketManager
 import com.uriel.musicjam.features.authspotify.domain.usecases.GetSpotifyAccessTokenUseCase
@@ -33,6 +34,7 @@ class PlayerViewModel @Inject constructor(
     private val spotifyRemote: SpotifyRemoteManager,
     private val getSpotifyAccessToken: GetSpotifyAccessTokenUseCase,
     private val jamWebSocket: JamWebSocketManager,
+    private val jamCodeManager: JamCodeManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlayerUiState())
@@ -86,6 +88,7 @@ class PlayerViewModel @Inject constructor(
                 is Result.Success -> {
                     _uiState.update { it.copy(isLoading = false, jam = result.data) }
                     connectSpotify(context)
+                    jamCodeManager.saveActiveJoinCode(result.data.joinCode)
                     startWebSocket(result.data.joinCode)
                 }
                 is Result.Error -> _uiState.update {
@@ -103,6 +106,7 @@ class PlayerViewModel @Inject constructor(
                 is Result.Success -> {
                     _uiState.update { it.copy(isLoading = false, jam = result.data) }
                     connectSpotify(context)
+                    jamCodeManager.saveActiveJoinCode(result.data.joinCode)
                     startWebSocket(result.data.joinCode)
                 }
                 is Result.Error -> _uiState.update {
@@ -122,6 +126,7 @@ class PlayerViewModel @Inject constructor(
 
 
             leaveJamUseCase(joinCode)
+            jamCodeManager.clearActiveJoinCode()
 
             wsJob?.cancel()
             stopProgressTimer()

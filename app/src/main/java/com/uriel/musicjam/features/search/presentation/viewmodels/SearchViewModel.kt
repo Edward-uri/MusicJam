@@ -3,6 +3,7 @@ package com.uriel.musicjam.features.search.presentation.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.uriel.musicjam.core.network.Result
+import com.uriel.musicjam.core.storage.JamCodeManager
 import com.uriel.musicjam.features.home.domain.entities.SpotifyTrack
 import com.uriel.musicjam.features.search.domain.usecases.AddTrackToQueueUseCase
 import com.uriel.musicjam.features.search.domain.usecases.SearchTracksUseCase
@@ -17,7 +18,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SearchViewModel @Inject constructor(
     private val searchTracks: SearchTracksUseCase,
-    private val addTrackToQueueUseCase: AddTrackToQueueUseCase
+    private val addTrackToQueueUseCase: AddTrackToQueueUseCase,
+    private val jamCodeManager: JamCodeManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SearchUiState())
@@ -55,23 +57,34 @@ class SearchViewModel @Inject constructor(
     }
 
     fun addTrackToQueue(track: SpotifyTrack) {
-        // 1. OPTIMISTIC UPDATE: Asumimos éxito inmediato
-        _uiState.update { state ->
-            state.copy(
-                queuedTrackIds = state.queuedTrackIds + track.id, // Añadimos visualmente a la cola
-                queueMessage = "Añadida a la cola: ${track.name}"
-            )
-        }
-
-        // 2. HACEMOS LA PETICIÓN AL SERVIDOR
         viewModelScope.launch {
-            val result = addTrackToQueueUseCase(track.id)
+            // 1. Obtenemos el joinCode activo
+            val joinCode = jamCodeManager.getActiveJoinCode()
 
-            // 3. ROLLBACK: Si falló, revertimos el cambio y avisamos al usuario
+            if (joinCode == null) {
+                // Si no hay jam activa, avisamos al usuario y cancelamos
+                _uiState.update {
+                    it.copy(queueMessage = "No estás en una Jam activa")
+                }
+                return@launch
+            }
+
+            // 2. OPTIMISTIC UPDATE
+            _uiState.update { state ->
+                state.copy(
+                    queuedTrackIds = state.queuedTrackIds + track.id,
+                    queueMessage = "Añadida a la cola: ${track.name}"
+                )
+            }
+
+            // 3. HACEMOS LA PETICIÓN AL SERVIDOR (Añadiendo el joinCode)
+            val result = addTrackToQueueUseCase(joinCode, track.id)
+
+            // 4. ROLLBACK si falló
             if (result is Result.Error) {
                 _uiState.update { state ->
                     state.copy(
-                        queuedTrackIds = state.queuedTrackIds - track.id, // Lo quitamos visualmente
+                        queuedTrackIds = state.queuedTrackIds - track.id,
                         queueMessage = "No se pudo añadir ${track.name}. Revirtiendo..."
                     )
                 }

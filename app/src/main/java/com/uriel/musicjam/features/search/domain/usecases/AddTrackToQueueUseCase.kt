@@ -7,6 +7,6 @@ import javax.inject.Inject
 class AddTrackToQueueUseCase @Inject constructor(
     private val repository: SearchRepository
 ) {
-    suspend operator fun invoke(trackId: String): Result<Unit> =
-        repository.queueTrack(trackId)
+    suspend operator fun invoke(joinCode: String,trackId: String): Result<Unit> =
+        repository.queueTrack(joinCode, trackId)
 }
