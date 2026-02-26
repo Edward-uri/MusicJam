@@ -6,15 +6,15 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.runtime.Composable
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.navigation.navDeepLink
 import com.uriel.musicjam.features.auth.presentation.screens.LoginScreen
 import com.uriel.musicjam.features.auth.presentation.screens.SignUpScreen
 import com.uriel.musicjam.features.home.presentation.screens.HomeScreen
+import com.uriel.musicjam.features.player.presentation.screens.PlayerScreen
 import com.uriel.musicjam.features.search.presentation.screens.SearchScreen
 
 @Composable
@@ -39,7 +39,7 @@ fun AppNavigation() {
             fadeOut(animationSpec = tween(400)) +
                     scaleOut(targetScale = 0.92f, animationSpec = tween(400))
         }
-    ){
+    ) {
         composable(AppScreens.LogIn.route) {
             LoginScreen(
                 onNavigateToHome = {
@@ -68,11 +68,9 @@ fun AppNavigation() {
             HomeScreen(
                 navController = navController,
                 onTrackClick = { track ->
-                    // navController.navigate(AppScreens.Player.createRoute(track.id))
+                    navController.navigate(AppScreens.playerRoute(track.id))  // 👈
                 },
-                onNavigate = { route ->
-                    navController.navigate(route)
-                }
+                onNavigate = { route -> navController.navigate(route) }
             )
         }
 
@@ -80,8 +78,21 @@ fun AppNavigation() {
             SearchScreen(navController = navController)
         }
 
-        composable(AppScreens.Library.route) {
-            // LibraryScreen()
+        // Player con trackId opcional
+        composable(
+            route = "player_screen?trackId={trackId}",
+            arguments = listOf(
+                navArgument("trackId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            PlayerScreen(
+                navController = navController,
+                trackId = backStackEntry.arguments?.getString("trackId")
+            )
         }
     }
 }

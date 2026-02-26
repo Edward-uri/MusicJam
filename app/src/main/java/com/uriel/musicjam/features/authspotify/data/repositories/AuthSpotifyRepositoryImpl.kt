@@ -31,4 +31,9 @@ class AuthSpotifyRepositoryImpl @Inject constructor(
             Result.Error("Error de red al contactar con el servidor: ${e.message}")
         }
     }
+    override suspend fun getSpotifyAccessToken(): Result<String> = try {
+        Result.Success(api.getSpotifyAccessToken().data!!)
+    } catch (e: Exception) {
+        Result.Error(e.message ?: "Error al obtener token de Spotify")
+    }
 }

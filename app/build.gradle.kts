@@ -5,7 +5,6 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinSerialization)
     alias(libs.plugins.devtools.ksp)
     alias(libs.plugins.hilt.android)
-
 }
 
 android {
@@ -20,6 +19,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        manifestPlaceholders["redirectSchemeName"] = "musicjam"
+        manifestPlaceholders["redirectHostName"] = "callback"
+
     }
 
     buildTypes {
@@ -98,6 +100,10 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     ksp(libs.hilt.compiler)
 
+    implementation(libs.spotify.auth)
+    implementation(files("libs/spotify-app-remote-release-0.8.0.aar"))
+    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("com.google.guava:guava:31.1-android")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -105,4 +111,10 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    dependencies {
+        implementation("org.hildan.krossbow:krossbow-stomp-core:7.1.0")
+        implementation("org.hildan.krossbow:krossbow-websocket-okhttp:7.1.0")
+        implementation("org.hildan.krossbow:krossbow-stomp-kxserialization-json:7.1.0")
+    }
 }
