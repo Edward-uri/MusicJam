@@ -4,9 +4,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,8 +26,12 @@ fun TrackItem(
     track: SpotifyTrack,
     onClick: () -> Unit,
     onMoreClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onAddToQueue: () -> Unit, // Nueva función
+    isQueued: Boolean = false,
 ) {
+    var expanded by remember { mutableStateOf(false) }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -72,12 +81,28 @@ fun TrackItem(
             }
 
             // Botón de más opciones
-            IconButton(onClick = onMoreClick) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "Más opciones",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            Box {
+                IconButton(onClick = { if (!isQueued) expanded = true }) {
+                    Icon(
+                        // Cambiamos el icono a Check si está encolada
+                        imageVector = if (isQueued) Icons.Default.Check else Icons.Default.MoreVert,
+                        contentDescription = "Opciones",
+                        tint = if (isQueued) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Añadir a la cola") },
+                        onClick = {
+                            expanded = false
+                            onAddToQueue()
+                        }
+                    )
+                }
             }
         }
     }

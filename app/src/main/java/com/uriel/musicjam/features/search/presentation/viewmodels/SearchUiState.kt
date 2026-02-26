@@ -6,5 +6,8 @@ data class SearchUiState(
     val query: String = "",
     val searchResults: List<SpotifyTrack> = emptyList(),
     val isSearching: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+
+    val queuedTrackIds: Set<String> = emptySet(),
+    val queueMessage: String? = null
 )

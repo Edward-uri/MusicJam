@@ -1,5 +1,6 @@
 package com.uriel.musicjam.features.search.presentation.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -32,6 +34,15 @@ fun SearchScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var searchQuery by remember { mutableStateOf("") }
+
+    val context = LocalContext.current
+
+    LaunchedEffect(uiState.queueMessage) {
+        uiState.queueMessage?.let { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            viewModel.clearQueueMessage()
+        }
+    }
 
     Scaffold(
         containerColor = Color(0xFFFDF5E6),
@@ -124,7 +135,6 @@ fun SearchScreen(
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
-                            // Aquí agregamos el espacio inferior de la barra para que la lista pase por detrás
                             contentPadding = PaddingValues(
                                 bottom = paddingValues.calculateBottomPadding() + 16.dp
                             )
@@ -133,6 +143,9 @@ fun SearchScreen(
                                 TrackItem(
                                     track = track,
                                     modifier = Modifier.fillMaxWidth(),
+                                    // Comprobamos si el ID de esta canción está en nuestra lista de encoladas
+                                    isQueued = track.id in uiState.queuedTrackIds,
+                                    onAddToQueue = { viewModel.addTrackToQueue(track) },
                                     onClick = { /* Navegar al reproductor */ }
                                 )
                             }
