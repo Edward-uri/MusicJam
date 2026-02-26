@@ -114,13 +114,20 @@ class PlayerViewModel @Inject constructor(
     }
 
     fun leaveJam() {
-        val joinCode = _uiState.value.jam?.joinCode ?: return
+        val currentJam = _uiState.value.jam ?: return
+        val joinCode = currentJam.joinCode
+
         viewModelScope.launch {
+            spotifyRemote.pause()
+
+
             leaveJamUseCase(joinCode)
+
             wsJob?.cancel()
-            stopProgressTimer() // <-- Añade esto
+            stopProgressTimer()
             launch { jamWebSocket.disconnect() }
             spotifyRemote.disconnect()
+
             _uiState.update { PlayerUiState() }
         }
     }
