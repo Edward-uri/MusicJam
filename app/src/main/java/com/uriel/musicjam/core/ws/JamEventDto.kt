@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 data class JamEventDto(
     val eventType: String,
     val triggeredBy: String,
-    val state: JamStateDto
+    val state: JamStateDto? = null
 )
 
 @Serializable
