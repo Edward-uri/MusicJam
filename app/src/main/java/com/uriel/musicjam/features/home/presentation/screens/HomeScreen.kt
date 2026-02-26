@@ -34,22 +34,38 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: AppScreens.Home.route
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFFDF5E6))
-            .windowInsetsPadding(WindowInsets.systemBars)
-    ) {
+
+    Scaffold(
+        containerColor = Color(0xFFFDF5E6),
+        bottomBar = {
+            HomeBottomBar(
+                currentRoute = AppScreens.Home.route,
+                onNavigate = { route ->
+                    if (route != AppScreens.Home.route) {
+                        navController.navigate(route) {
+                            popUpTo(AppScreens.Home.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(bottom = 120.dp)
+                .padding(horizontal = 16.dp), // Quitamos el paddingValues de aquí
+            contentPadding = PaddingValues(
+                top = paddingValues.calculateTopPadding() + 16.dp, // Respetamos la barra de estado superior
+                bottom = paddingValues.calculateBottomPadding() + 16.dp // Agregamos el espacio de la BottomBar al final de la lista
+            )
         ) {
             item {
                 HomeHeader(profile = uiState.profile)
                 Spacer(Modifier.height(24.dp))
             }
+            // ... resto de tus items (Tus álbumes, Lo que más escuchas, etc.)
             item {
                 Text(
                     text = "Tus álbumes",
@@ -70,7 +86,6 @@ fun HomeScreen(
                 )
                 Spacer(Modifier.height(12.dp))
             }
-
             item {
                 Column(
                     modifier = Modifier
@@ -92,20 +107,5 @@ fun HomeScreen(
                 }
             }
         }
-
-        HomeBottomBar(
-            modifier = Modifier.align(Alignment.BottomCenter),
-            currentRoute = currentRoute,
-            onNavigate = { route ->
-                if (route != currentRoute) {
-                    navController.navigate(route) {
-                        popUpTo(AppScreens.Home.route) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                }
-            }
-        )
     }
-
 }
